@@ -174,3 +174,14 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+
+# Database
+.database
+.db
+*.db
+
+# Jupyter Notebook
+*.ipynb
+jupyter
+notebooks
+notebook
