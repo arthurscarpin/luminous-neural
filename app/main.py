@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.domains.enterprise.controller import enterprise_routers
+from app.domains.enterprise.controller import enterprise_router
 from app.api.exception_handlers import register_exception_handlers
 
 app = FastAPI(
@@ -8,5 +8,5 @@ app = FastAPI(
     version='0.1.0'
 )
 
-app.include_router(enterprise_routers)
+app.include_router(enterprise_router)
 register_exception_handlers(app)

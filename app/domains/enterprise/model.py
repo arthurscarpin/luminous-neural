@@ -2,22 +2,17 @@ from app.domains.mixins.timestamp import TimestampMixin
 from app.domains.mixins.audit import AuditMixin
 from app.core.sql_database import Base
 
-from sqlalchemy import String
+from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
 class Enterprise(TimestampMixin, AuditMixin, Base):
-    """Represents an enterprise entity in the system.
+    """
+    Represents an enterprise entity.
 
     Inherits:
-        TimestampMixin: Adds created_at and updated_at timestamp fields.
-        AuditMixin: Adds created_by and updated_by audit fields.
-        Base: SQLAlchemy declarative base class for ORM mapping.
-
-    Attributes:
-        id (int): Primary key identifier.
-        name (str): Name of the enterprise.
-        description (str): Description of the enterprise.
-        ia_model (str): The AI model associated with the enterprise.
+        TimestampMixin: Adds created_at and updated_at timestamps.
+        AuditMixin: Adds auditing fields like created_by and updated_by.
+        Base: SQLAlchemy declarative base.
     """
     __tablename__ = 'enterprise'
     
@@ -25,6 +20,7 @@ class Enterprise(TimestampMixin, AuditMixin, Base):
     name: Mapped[str] = mapped_column(String(30), nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     ia_model: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     
     def __repr__(self) -> str:
         """Returns a string representation of the Enterprise instance.

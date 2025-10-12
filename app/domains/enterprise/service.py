@@ -1,42 +1,45 @@
-from app.core.sql_database import db
+from typing import List
+from sqlalchemy.orm import Session
+
 from app.repositories.base import BaseRepository
 from app.domains.enterprise.model import Enterprise
 from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseResponseSchema
 
 class EnterpriseService:
-    """Service layer for the Enterprise domain, handling business logic 
-    and interactions with the Enterprise repository.
-
-    This service provides methods for creating, retrieving, updating, 
-    and deleting Enterprise records in the database, ensuring proper 
-    use of Pydantic schemas and database session management.
     """
-
-    def __init__(self) -> None:
-        """Initialize the EnterpriseService.
-
-        Sets up a database session and instantiates the generic BaseRepository
-        for managing Enterprise entities.
-        """
-        self._session = db.get_session()
-        self._repository = BaseRepository[Enterprise, EnterpriseCreateSchema](Enterprise)
+    Service class for managing enterprise entities.
+    Handles creation and retrieval of enterprises via the repository.
+    """
     
-    def create(self, schema: EnterpriseCreateSchema) -> EnterpriseResponseSchema:
-        """Create a new Enterprise record in the database.
+    def __init__(self, session: Session):
+        """
+        Initialize the service with a database session.
 
         Args:
-            schema (EnterpriseCreateSchema): Pydantic schema containing validated fields 
-            required to create a new Enterprise.
+            session (Session): SQLAlchemy session for database operations.
+        """
+        self._session = session
+        self._repository = BaseRepository[Enterprise, EnterpriseCreateSchema](Enterprise, self._session)
+
+    def create(self, schema: EnterpriseCreateSchema) -> EnterpriseResponseSchema:
+        """
+        Create a new enterprise using the provided schema.
+
+        Args:
+            schema (EnterpriseCreateSchema): Data for the new enterprise.
 
         Returns:
-            EnterpriseResponseSchema: Pydantic schema representing the newly created 
-            Enterprise entity, ready to be returned in an API response.
-
-        Notes:
-            The database session is automatically closed after the operation.
+            EnterpriseResponseSchema: The created enterprise as a response schema.
         """
-        try:
-            enterprise = self._repository.create(schema)
-            return EnterpriseResponseSchema.model_validate(enterprise)
-        finally:
-            self._session.close()
+        enterprise = self._repository.create(schema)
+        return EnterpriseResponseSchema.model_validate(enterprise)
+
+    def list_all(self) -> List[EnterpriseResponseSchema]:
+        """
+        Retrieve all enterprises from the database.
+
+        Returns:
+            List[EnterpriseResponseSchema]: List of enterprises as response schemas.
+        """
+        enterprises = self._repository.get_all()
+        return [EnterpriseResponseSchema.model_validate(ent) for ent in enterprises]
