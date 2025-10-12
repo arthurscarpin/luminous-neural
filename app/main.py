@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.domains.enterprise.controller import enterprise_routers
+from app.api.exception_handlers import register_exception_handlers
 
 app = FastAPI(
     title='Luminous Neural', 
@@ -8,3 +9,4 @@ app = FastAPI(
 )
 
 app.include_router(enterprise_routers)
+register_exception_handlers(app)
