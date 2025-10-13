@@ -1,5 +1,6 @@
 from typing import Any, List, Optional
 
+from app.core.logger import logger
 from app.api.api_schemas import ErrorSchema
 from app.api.exceptions import NotFoundException
 
@@ -25,6 +26,7 @@ def error_response(
     Returns:
         JSONResponse: A FastAPI JSONResponse containing the structured error payload.
     """
+    logger.error('Error occurred: %s | Details: %s | Status code: %d', message, details, status_code)
     schema = ErrorSchema(message=message, details=details)
     return JSONResponse(
         status_code=status_code,
@@ -63,6 +65,12 @@ def register_exception_handlers(exception_handler: FastAPI):
                         of validation errors.
         """
         errors: List[dict] = [dict(e) for e in exc.errors()] # type: ignore
+        logger.warning(
+            'Validation error on request %s %s | Details: %s',
+            request.method,
+            request.url.path,
+            errors # type: ignore
+        )
         return error_response(
             message="Validation error",
             details=errors, # type: ignore
@@ -88,6 +96,15 @@ def register_exception_handlers(exception_handler: FastAPI):
                         details about the database constraint violation.
         """
         errors = [{"error": str(exc.orig)}]
+
+        logger.error(
+            'Database integrity error on request %s %s | Details: %s',
+            request.method,
+            request.url.path,
+            errors,
+            exc_info=exc  # type: ignore
+        )
+
         return error_response(
             message="Database integrity error",
             details=errors,
@@ -110,6 +127,23 @@ def register_exception_handlers(exception_handler: FastAPI):
             JSONResponse: A standardized JSON response with the HTTP status code and 
                         the exception message.
         """
+        if 400 <= exc.status_code < 500:
+            logger.warning(
+                'HTTP exception on request %s %s | Status: %d | Detail: %s',
+                request.method,
+                request.url.path,
+                exc.status_code,
+                exc.detail
+            )
+        else:
+            logger.error(
+                'HTTP exception on request %s %s | Status: %d | Detail: %s',
+                request.method,
+                request.url.path,
+                exc.status_code,
+                exc.detail
+            )
+        
         return error_response(
             message=str(exc.detail),
             details=None,
@@ -134,6 +168,15 @@ def register_exception_handlers(exception_handler: FastAPI):
                         the exception details.
         """
         errors = [{"error": str(exc)}]
+    
+        logger.error(
+            'Unhandled exception on request %s %s | Details: %s',
+            request.method,
+            request.url.path,
+            errors,
+            exc_info=exc
+        )
+        
         return error_response(
             message="Internal server error",
             details=errors,
@@ -158,10 +201,17 @@ def register_exception_handlers(exception_handler: FastAPI):
             JSONResponse: A structured JSON error response with status code 404 and
                 details about the missing resource.
         """
-        errors = [{"resource": exc.resource, "id": exc.resource_id}] # type: ignore
+        errors = [{"resource": exc.resource, "id": exc.resource_id}]  # type: ignore
+
+        logger.warning(
+            'Resource not found on request %s %s | Details: %s',
+            request.method,
+            request.url.path,
+            errors # type: ignore
+        )
+        
         return error_response(
             message=exc.message,
-            details=errors, # type: ignore
+            details=errors,  # type: ignore
             status_code=404
         )
-

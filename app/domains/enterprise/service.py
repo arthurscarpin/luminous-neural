@@ -1,9 +1,15 @@
 from typing import List
 from sqlalchemy.orm import Session
 
+from app.core.logger import logger
 from app.repositories.base import BaseRepository
 from app.domains.enterprise.model import Enterprise
-from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseUpdateSchema, EnterpriseResponseSchema, EnterpriseResponseSchema
+from app.domains.enterprise.schema import (
+    EnterpriseCreateSchema, 
+    EnterpriseUpdateSchema, 
+    EnterpriseResponseSchema
+)
+
 from app.api.exceptions import NotFoundException
 
 class EnterpriseService:
@@ -32,8 +38,11 @@ class EnterpriseService:
         Returns:
             EnterpriseResponseSchema: The created enterprise as a response schema.
         """
+        logger.info('Creating a new enterprise with data: %s', schema.model_dump())
         enterprise = self._repository.create(schema)
-        return EnterpriseResponseSchema.model_validate(enterprise)
+        validated_enterprise = EnterpriseResponseSchema.model_validate(enterprise)
+        logger.info('Enterprise created successfully: %s', validated_enterprise.model_dump())
+        return validated_enterprise
 
     def list_all(self) -> List[EnterpriseResponseSchema]:
         """
@@ -42,8 +51,11 @@ class EnterpriseService:
         Returns:
             List[EnterpriseResponseSchema]: List of enterprises as response schemas.
         """
+        logger.info('Retrieving all enterprises from the database')
         enterprises = self._repository.get_all()
-        return [EnterpriseResponseSchema.model_validate(ent) for ent in enterprises]
+        validated_enterprises = [EnterpriseResponseSchema.model_validate(ent) for ent in enterprises]
+        logger.info('Retrieved %d enterprises', len(validated_enterprises))
+        return validated_enterprises
 
     def list_by_id(self, id: int) -> EnterpriseResponseSchema:
         """
@@ -55,10 +67,16 @@ class EnterpriseService:
         Returns:
             EnterpriseResponseSchema: The enterprise data.
         """
+        logger.info('Retrieving enterprise with ID: %d', id)
         enterprise = self._repository.get_by_id(id)
+        
         if not enterprise:
+            logger.warning('Enterprise with ID %d not found', id)
             raise NotFoundException('Enterprise', id)
-        return EnterpriseResponseSchema.model_validate(enterprise)
+        
+        validated_enterprise = EnterpriseResponseSchema.model_validate(enterprise)
+        logger.info('Enterprise retrieved successfully: %s', validated_enterprise.model_dump())
+        return validated_enterprise
     
     def update(self, id: int, schema: EnterpriseUpdateSchema) -> EnterpriseResponseSchema:
         """
@@ -74,13 +92,17 @@ class EnterpriseService:
         Returns:
             EnterpriseResponseSchema: The updated enterprise data.
         """
+        logger.info('Updating enterprise with ID: %d using data: %s', id, schema.model_dump())
         enterprise = self._repository.get_by_id(id)
         
         if not enterprise:
+            logger.warning('Enterprise with ID %d not found for update', id)
             raise NotFoundException("Enterprise", id)
 
         updated_enterprise = self._repository.update(enterprise, schema)
-        return EnterpriseResponseSchema.model_validate(updated_enterprise)
+        validated_enterprise = EnterpriseResponseSchema.model_validate(updated_enterprise)
+        logger.info('Enterprise updated successfully: %s', validated_enterprise.model_dump())
+        return validated_enterprise
     
     def delete(self, id: int) -> None:
         """
@@ -92,9 +114,12 @@ class EnterpriseService:
         Raises:
             NotFoundException: If no enterprise with the given ID exists.
         """
+        logger.info('Deleting enterprise with ID: %d', id)
         enterprise = self._repository.get_by_id(id)
         
         if not enterprise:
+            logger.warning('Enterprise with ID %d not found for deletion', id)
             raise NotFoundException("Enterprise", id)
 
         self._repository.delete(enterprise)
+        logger.info('Enterprise with ID %d deleted successfully', id)

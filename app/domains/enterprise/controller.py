@@ -1,10 +1,16 @@
 from typing import List, cast
 
-from fastapi import APIRouter, Depends, Response, status
-from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseUpdateSchema, EnterpriseResponseSchema, EnterpriseResponseSchema
+from app.core.logger import logger
 from app.domains.enterprise.service import EnterpriseService
 from app.api.dependencies import get_enterprise_service
 from app.api.api_schemas import ResponseSchema
+from app.domains.enterprise.schema import (
+    EnterpriseCreateSchema, 
+    EnterpriseUpdateSchema, 
+    EnterpriseResponseSchema
+)
+
+from fastapi import APIRouter, Depends, Response, status
 
 enterprise_router = APIRouter(
     prefix='/enterprise',
@@ -32,7 +38,10 @@ def create_enterprise(
     Returns:
         ResponseSchema[EnterpriseResponseSchema]: Created enterprise wrapped in a response schema.
     """
-    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.create(schema)))
+    logger.info('Creating a new enterprise with data: %s', schema.model_dump())
+    created_enterprise = service.create(schema)
+    logger.info('Enterprise created successfully with ID: %s', created_enterprise.id)
+    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=created_enterprise))
 
 @enterprise_router.get(
     '/',
@@ -53,7 +62,10 @@ def list_all_enterprises(
     Returns:
         ResponseSchema[List[EnterpriseResponseSchema]]: List of enterprises wrapped in a response schema.
     """
-    return cast(ResponseSchema[List[EnterpriseResponseSchema]], ResponseSchema(data=service.list_all()))
+    logger.info('Retrieving all enterprises from the database')
+    enterprises = service.list_all()
+    logger.info('Retrieved %d enterprises', len(enterprises))
+    return cast(ResponseSchema[List[EnterpriseResponseSchema]], ResponseSchema(data=enterprises))
 
 @enterprise_router.get(
     '/{enterprise_id}',
@@ -75,7 +87,10 @@ def list_by_id(
     Returns:
         ResponseSchema[EnterpriseResponseSchema]: The enterprise data wrapped in a response schema.
     """
-    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.list_by_id(enterprise_id)))
+    logger.info('Retrieving enterprise with ID: %d', enterprise_id)
+    enterprise = service.list_by_id(enterprise_id)
+    logger.info('Enterprise retrieved successfully: %s', enterprise.model_dump())
+    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=enterprise))
 
 @enterprise_router.put(
     '/{enterprise_id}',
@@ -99,7 +114,10 @@ def update_by_id(
     Returns:
         ResponseSchema[EnterpriseResponseSchema]: The updated enterprise data wrapped in a response schema.
     """
-    return ResponseSchema(data=EnterpriseResponseSchema.model_validate(service.update(enterprise_id, schema)))
+    logger.info('Updating enterprise with ID: %d using data: %s', enterprise_id, schema.model_dump())
+    updated_enterprise = service.update(enterprise_id, schema)
+    logger.info('Enterprise updated successfully: %s', updated_enterprise.model_dump())
+    return ResponseSchema(data=EnterpriseResponseSchema.model_validate(updated_enterprise))
 
 @enterprise_router.delete(
     '/{enterprise_id}',
@@ -120,5 +138,7 @@ def delete_by_id(
     Returns:
         Response: HTTP 204 No Content response indicating successful deletion.
     """
+    logger.info('Deleting enterprise with ID: %d', enterprise_id)
     service.delete(enterprise_id)
+    logger.info('Enterprise with ID %d deleted successfully', enterprise_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
