@@ -1,6 +1,6 @@
 from typing import List, cast
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseUpdateSchema, EnterpriseResponseSchema
 from app.domains.enterprise.service import EnterpriseService
 from app.api.dependencies import get_enterprise_service
@@ -66,7 +66,8 @@ def list_by_id(
     enterprise_id: int,
     service: EnterpriseService = Depends(get_enterprise_service)
 ):
-    """Retrieve an enterprise by its ID.
+    """
+    Retrieve an enterprise by its ID.
 
     Args:
         id (int): Unique identifier of the enterprise.
@@ -88,7 +89,8 @@ def update_by_id(
     schema: EnterpriseUpdateSchema,
     service: EnterpriseService = Depends(get_enterprise_service)
 ):
-    """Update an existing enterprise by its ID.
+    """
+    Update an existing enterprise by its ID.
 
     Args:
         id (int): Unique identifier of the enterprise to update.
@@ -99,3 +101,25 @@ def update_by_id(
         ResponseSchema[EnterpriseResponseSchema]: The updated enterprise data wrapped in a response schema.
     """
     return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.update(enterprise_id, schema)))
+
+@enterprise_router.delete(
+    '/{enterprise_id}',
+   summary='Delete enterprise by ID',
+    response_description='Deletes a specific enterprise.'
+)
+def delete_by_id(
+    enterprise_id: int,
+    service: EnterpriseService = Depends(get_enterprise_service)
+):
+    """
+    Delete an enterprise by its ID.
+
+    Args:
+        enterprise_id (int): Unique identifier of the enterprise to delete.
+        service (EnterpriseService, optional): Service handling enterprise operations. Defaults to Depends(get_enterprise_service).
+
+    Returns:
+        Response: HTTP 204 No Content response indicating successful deletion.
+    """
+    service.delete(enterprise_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
