@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Type, TypeVar, Generic, List, Optional
 
 from pydantic import BaseModel
@@ -143,13 +144,14 @@ class BaseRepository(Generic[T, Schema]):
 
         This method sets the `status` attribute to False instead of physically removing
         the record from the database. It preserves the record for historical or audit purposes.
+        It also updates the `updated_at` and `updated_by` fields.
 
         Args:
             obj (T): The SQLAlchemy model instance to logically delete.
 
         Notes:
-            - The model must have a `status` attribute for this operation to succeed.
-            - If the `status` attribute is missing, a warning will be logged and the operation will be skipped.
+            - The model must have `status`, `updated_at`, and `updated_by` attributes for full operation.
+            - If `status` is missing, a warning will be logged and the operation will be skipped.
         """
         if hasattr(obj, 'status'):
             logger.debug(
@@ -158,6 +160,13 @@ class BaseRepository(Generic[T, Schema]):
                 getattr(obj, 'id', None)
             )
             setattr(obj, 'status', False)
+            
+            if hasattr(obj, 'updated_at'):
+                setattr(obj, 'updated_at', datetime.now(timezone.utc))
+            
+            if hasattr(obj, 'updated_by'):
+                setattr(obj, 'updated_by', 'system')
+
             self.session.commit()
             logger.debug(
                 '%s record with ID %s logically deleted', 

@@ -55,20 +55,20 @@ class LoggerSettings:
         )
 
         # --- Log handler configuration ---
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        if not self.logger.handlers:
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
         
-        # --- Configure log file ---
-        if settings.LOG_PATH:
-            log_dir = Path(settings.LOG_PATH).parent if settings.LOG_PATH.endswith('.log') else Path(settings.LOG_PATH)
-            log_dir.mkdir(parents=True, exist_ok=True)
-            daily_filename = datetime.now().strftime('%Y%m%d') + '.log'
-            log_path = log_dir / daily_filename
-            file_handler = logging.FileHandler(log_path, encoding='utf-8')
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
-
+            # --- Configure log file ---
+            if settings.LOG_PATH:
+                log_dir = Path(settings.LOG_PATH).parent if settings.LOG_PATH.endswith('.log') else Path(settings.LOG_PATH)
+                log_dir.mkdir(parents=True, exist_ok=True)
+                daily_filename = datetime.utcnow().strftime('%Y%m%d') + '.log'
+                log_path = log_dir / daily_filename
+                file_handler = logging.FileHandler(log_path, encoding='utf-8')
+                file_handler.setFormatter(formatter)
+                self.logger.addHandler(file_handler)
 
     def get_logger(self) -> logging.Logger:
         """
