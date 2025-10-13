@@ -123,3 +123,27 @@ class EnterpriseService:
 
         self._repository.delete(enterprise)
         logger.info('Enterprise with ID %d deleted successfully', id)
+  
+    def logical_delete(self, id: int) -> None:
+        """
+        Perform a logical (soft) deletion of an enterprise by its ID.
+
+        This method marks the enterprise as inactive (status=False) instead of physically
+        removing it from the database. Useful for preserving historical data while hiding
+        it from normal queries.
+
+        Args:
+            id (int): Unique identifier of the enterprise to logically delete.
+
+        Raises:
+            NotFoundException: If no enterprise with the given ID exists.
+        """
+        logger.info('Starting logical deletion for enterprise with ID: %d', id)
+        enterprise = self._repository.get_by_id(id)
+        
+        if not enterprise:
+            logger.warning('Enterprise with ID %d not found for logical deletion', id)
+            raise NotFoundException("Enterprise", id)
+        
+        self._repository.logical_delete(enterprise)
+        logger.info('Logical deletion completed: Enterprise with ID %d is now inactive', id)

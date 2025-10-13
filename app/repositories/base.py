@@ -69,20 +69,25 @@ class BaseRepository(Generic[T, Schema]):
 
     def get_by_id(self, id: int) -> Optional[T]:
         """
-        Retrieve a single record by its primary key.
+        Retrieve a single record by its primary key, considering only active records (status=True).
 
         Args:
             id (int): The primary key of the record to retrieve.
 
         Returns:
-            Optional[T]: The model instance if found; otherwise, None.
+            Optional[T]: The model instance if found and active; otherwise, None.
         """
-        logger.debug('Retrieving %s record with ID: %d', self.model.__name__, id)
-        result = self.session.query(self.model).filter(self.model.id == id).first()
+        logger.debug('Retrieving %s record with ID: %d (only active)', self.model.__name__, id)
+        query = self.session.query(self.model).filter(self.model.id == id)
+        
+        if hasattr(self.model, 'status'):
+            query = query.filter(getattr(self.model, 'status') == True)  # noqa: E712
+        
+        result = query.first()
         if result:
-            logger.debug('%s record with ID %d found', self.model.__name__, id)
+            logger.debug('%s record with ID %d found and active', self.model.__name__, id)
         else:
-            logger.debug('%s record with ID %d not found', self.model.__name__, id)
+            logger.debug('%s record with ID %d not found or inactive', self.model.__name__, id)
         return result
 
     def update(self, obj: T, obj_in: BaseModel) -> T:
@@ -90,14 +95,22 @@ class BaseRepository(Generic[T, Schema]):
         Update an existing record with values provided by a Pydantic Schema.
 
         Only fields explicitly set in the schema will be updated (`exclude_unset=True`).
+        Only active records (status=True) can be updated.
 
         Args:
             obj (T): The SQLAlchemy model instance to update.
             obj_in (Schema): A Pydantic schema containing the fields to update.
 
+        Raises:
+            ValueError: If the record is inactive (status=False) and cannot be updated.
+
         Returns:
             T: The updated SQLAlchemy model instance with refreshed database state.
         """
+        if hasattr(obj, 'status') and not getattr(obj, 'status'):
+            logger.warning('Cannot update %s record with ID %s because it is inactive', obj.__class__.__name__, getattr(obj, 'id', None))
+            raise ValueError(f"Cannot update inactive {obj.__class__.__name__} record with ID {getattr(obj, 'id', None)}")
+
         update_data = obj_in.model_dump(exclude_unset=True)
         logger.debug('Updating %s record with ID %s using data: %s', obj.__class__.__name__, getattr(obj, 'id', None), update_data)
         
@@ -123,3 +136,37 @@ class BaseRepository(Generic[T, Schema]):
         self.session.delete(obj)
         self.session.commit()
         logger.debug('%s record with ID %s deleted successfully', obj.__class__.__name__, getattr(obj, 'id', None))
+
+    def logical_delete(self, obj: T) -> None:
+        """
+        Perform a logical (soft) deletion of a database record.
+
+        This method sets the `status` attribute to False instead of physically removing
+        the record from the database. It preserves the record for historical or audit purposes.
+
+        Args:
+            obj (T): The SQLAlchemy model instance to logically delete.
+
+        Notes:
+            - The model must have a `status` attribute for this operation to succeed.
+            - If the `status` attribute is missing, a warning will be logged and the operation will be skipped.
+        """
+        if hasattr(obj, 'status'):
+            logger.debug(
+                'Logically deleting %s record with ID: %s', 
+                obj.__class__.__name__, 
+                getattr(obj, 'id', None)
+            )
+            setattr(obj, 'status', False)
+            self.session.commit()
+            logger.debug(
+                '%s record with ID %s logically deleted', 
+                obj.__class__.__name__, 
+                getattr(obj, 'id', None)
+            )
+        else:
+            logger.warning(
+                '%s record with ID %s does not have a status attribute. Cannot logically delete.', 
+                obj.__class__.__name__, 
+                getattr(obj, 'id', None)
+            )

@@ -121,24 +121,54 @@ def update_by_id(
 
 @enterprise_router.delete(
     '/{enterprise_id}',
-   summary='Delete enterprise by ID',
-    response_description='Deletes a specific enterprise.'
+    summary='Logically delete an enterprise by ID',
+    response_description='Marks the specified enterprise as inactive (logical deletion).'
 )
-def delete_by_id(
+def logical_delete_by_id(
     enterprise_id: int,
     service: EnterpriseService = Depends(get_enterprise_service)
 ) -> Response:
     """
-    Delete an enterprise by its ID.
+    Logically deletes an enterprise by setting its status flag to False.
+
+    This endpoint performs a soft delete, meaning the record remains in the database
+    but is marked as inactive. Use this when you want to preserve historical data
+    without exposing it in normal queries.
 
     Args:
-        enterprise_id (int): Unique identifier of the enterprise to delete.
-        service (EnterpriseService, optional): Service handling enterprise operations. Defaults to Depends(get_enterprise_service).
+        enterprise_id (int): Unique identifier of the enterprise to logically delete.
+        service (EnterpriseService, optional): Service instance for enterprise operations.
+            Defaults to Depends(get_enterprise_service).
 
     Returns:
-        Response: HTTP 204 No Content response indicating successful deletion.
+        Response: HTTP 204 No Content response indicating successful logical deletion.
     """
-    logger.info('Deleting enterprise with ID: %d', enterprise_id)
-    service.delete(enterprise_id)
-    logger.info('Enterprise with ID %d deleted successfully', enterprise_id)
+    logger.info('Initiating logical deletion for enterprise with ID: %d', enterprise_id)
+    service.logical_delete(enterprise_id)
+    logger.info('Enterprise with ID %d marked as inactive successfully', enterprise_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# --- Physical Exclusion ---
+# @enterprise_router.delete(
+#     '/{enterprise_id}',
+#    summary='Delete enterprise by ID',
+#     response_description='Deletes a specific enterprise.'
+# )
+# def delete_by_id(
+#     enterprise_id: int,
+#     service: EnterpriseService = Depends(get_enterprise_service)
+# ) -> Response:
+#     """
+#     Delete an enterprise by its ID.
+
+#     Args:
+#         enterprise_id (int): Unique identifier of the enterprise to delete.
+#         service (EnterpriseService, optional): Service handling enterprise operations. Defaults to Depends(get_enterprise_service).
+
+#     Returns:
+#         Response: HTTP 204 No Content response indicating successful deletion.
+#     """
+#     logger.info('Deleting enterprise with ID: %d', enterprise_id)
+#     service.delete(enterprise_id)
+#     logger.info('Enterprise with ID %d deleted successfully', enterprise_id)
+#     return Response(status_code=status.HTTP_204_NO_CONTENT)
