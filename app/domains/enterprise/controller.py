@@ -1,7 +1,7 @@
 from typing import List, cast
 
 from fastapi import APIRouter, Depends, status
-from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseResponseSchema
+from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseUpdateSchema, EnterpriseResponseSchema
 from app.domains.enterprise.service import EnterpriseService
 from app.api.dependencies import get_enterprise_service
 from app.api.api_schemas import ResponseSchema
@@ -63,7 +63,7 @@ def list_all_enterprises(
     response_description='List the specified enterprise.'
 )
 def list_by_id(
-    id: int,
+    enterprise_id: int,
     service: EnterpriseService = Depends(get_enterprise_service)
 ):
     """Retrieve an enterprise by its ID.
@@ -75,4 +75,27 @@ def list_by_id(
     Returns:
         ResponseSchema[EnterpriseResponseSchema]: The enterprise data wrapped in a response schema.
     """
-    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.list_by_id(id)))
+    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.list_by_id(enterprise_id)))
+
+@enterprise_router.put(
+    '/{enterprise_id}',
+    response_model=ResponseSchema[EnterpriseResponseSchema],
+    summary='Update enterprise by ID',
+    response_description='Update a specific enterprise.'
+)
+def update_by_id(
+    enterprise_id: int,
+    schema: EnterpriseUpdateSchema,
+    service: EnterpriseService = Depends(get_enterprise_service)
+):
+    """Update an existing enterprise by its ID.
+
+    Args:
+        id (int): Unique identifier of the enterprise to update.
+        schema (EnterpriseUpdateSchema): Data to update the enterprise with.
+        service (EnterpriseService, optional): Service handling enterprise operations. Defaults to Depends(get_enterprise_service).
+
+    Returns:
+        ResponseSchema[EnterpriseResponseSchema]: The updated enterprise data wrapped in a response schema.
+    """
+    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.update(enterprise_id, schema)))

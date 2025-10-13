@@ -70,7 +70,7 @@ class BaseRepository(Generic[T, Schema]):
         """
         return self.session.query(self.model).filter(self.model.id == id).first()
 
-    def update(self, obj: T, obj_in: Schema) -> T:
+    def update(self, obj: T, obj_in: BaseModel) -> T:
         """
         Update an existing record with values provided by a Pydantic Schema.
 
