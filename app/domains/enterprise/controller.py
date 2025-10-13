@@ -15,7 +15,8 @@ enterprise_router = APIRouter(
     '/',
     response_model=ResponseSchema[EnterpriseResponseSchema],
     status_code=status.HTTP_201_CREATED,
-    summary='Create a new Enterprise'
+    summary='Create a new Enterprise',
+    response_description='New Enterprise created.'
 )
 def create_enterprise(
     schema: EnterpriseCreateSchema,
@@ -31,8 +32,7 @@ def create_enterprise(
     Returns:
         ResponseSchema[EnterpriseResponseSchema]: Created enterprise wrapped in a response schema.
     """
-    enterprise = service.create(schema)
-    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=enterprise))
+    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.create(schema)))
 
 
 @enterprise_router.get(
@@ -54,5 +54,25 @@ def list_all_enterprises(
     Returns:
         ResponseSchema[List[EnterpriseResponseSchema]]: List of enterprises wrapped in a response schema.
     """
-    enterprises = service.list_all()
-    return cast(ResponseSchema[List[EnterpriseResponseSchema]], ResponseSchema(data=enterprises))
+    return cast(ResponseSchema[List[EnterpriseResponseSchema]], ResponseSchema(data=service.list_all()))
+
+@enterprise_router.get(
+    '/{enterprise_id}',
+    response_model=ResponseSchema[EnterpriseResponseSchema],
+    summary='Query enterprise by ID',
+    response_description='List the specified enterprise.'
+)
+def list_by_id(
+    id: int,
+    service: EnterpriseService = Depends(get_enterprise_service)
+):
+    """Retrieve an enterprise by its ID.
+
+    Args:
+        id (int): Unique identifier of the enterprise.
+        service (EnterpriseService, optional): Service handling enterprise operations. Defaults to Depends(get_enterprise_service).
+
+    Returns:
+        ResponseSchema[EnterpriseResponseSchema]: The enterprise data wrapped in a response schema.
+    """
+    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.list_by_id(id)))

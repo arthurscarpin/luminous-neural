@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.repositories.base import BaseRepository
 from app.domains.enterprise.model import Enterprise
 from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseResponseSchema
+from app.api.exceptions import NotFoundException
 
 class EnterpriseService:
     """
@@ -43,3 +44,18 @@ class EnterpriseService:
         """
         enterprises = self._repository.get_all()
         return [EnterpriseResponseSchema.model_validate(ent) for ent in enterprises]
+
+    def list_by_id(self, id: int) -> EnterpriseResponseSchema:
+        """
+        Retrieve an enterprise by its ID.
+
+        Args:
+            id (int): Unique identifier of the enterprise.
+
+        Returns:
+            EnterpriseResponseSchema: The enterprise data.
+        """
+        enterprise = self._repository.get_by_id(id)
+        if not enterprise:
+            raise NotFoundException('Enterprise', id)
+        return EnterpriseResponseSchema.model_validate(enterprise)
