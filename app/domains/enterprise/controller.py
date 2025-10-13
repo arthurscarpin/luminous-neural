@@ -1,7 +1,7 @@
 from typing import List, cast
 
 from fastapi import APIRouter, Depends, Response, status
-from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseUpdateSchema, EnterpriseResponseSchema
+from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseUpdateSchema, EnterpriseResponseSchema, EnterpriseResponseSchema
 from app.domains.enterprise.service import EnterpriseService
 from app.api.dependencies import get_enterprise_service
 from app.api.api_schemas import ResponseSchema
@@ -34,7 +34,6 @@ def create_enterprise(
     """
     return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.create(schema)))
 
-
 @enterprise_router.get(
     '/',
     response_model=ResponseSchema[List[EnterpriseResponseSchema]],
@@ -65,7 +64,7 @@ def list_all_enterprises(
 def list_by_id(
     enterprise_id: int,
     service: EnterpriseService = Depends(get_enterprise_service)
-):
+) -> ResponseSchema[EnterpriseResponseSchema]:
     """
     Retrieve an enterprise by its ID.
 
@@ -88,7 +87,7 @@ def update_by_id(
     enterprise_id: int,
     schema: EnterpriseUpdateSchema,
     service: EnterpriseService = Depends(get_enterprise_service)
-):
+) -> ResponseSchema[EnterpriseResponseSchema]:
     """
     Update an existing enterprise by its ID.
 
@@ -100,7 +99,7 @@ def update_by_id(
     Returns:
         ResponseSchema[EnterpriseResponseSchema]: The updated enterprise data wrapped in a response schema.
     """
-    return cast(ResponseSchema[EnterpriseResponseSchema], ResponseSchema(data=service.update(enterprise_id, schema)))
+    return ResponseSchema(data=EnterpriseResponseSchema.model_validate(service.update(enterprise_id, schema)))
 
 @enterprise_router.delete(
     '/{enterprise_id}',
@@ -110,7 +109,7 @@ def update_by_id(
 def delete_by_id(
     enterprise_id: int,
     service: EnterpriseService = Depends(get_enterprise_service)
-):
+) -> Response:
     """
     Delete an enterprise by its ID.
 

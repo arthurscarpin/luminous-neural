@@ -9,7 +9,7 @@ class AuditMixin:
         updated_by (Mapped[Optional[str]]): The username or identifier of the user who last updated the record, optional.
     """
     created_by: Mapped[str] = mapped_column(String(50), nullable=False, default="system")
-    updated_by: Mapped[str] = mapped_column(String(50), nullable=False, default="system")
+    updated_by: Mapped[str] = mapped_column(String(50), nullable=True, default=None)
 
     def __repr__(self) -> str:
         """Returns a string representation of the audit information.

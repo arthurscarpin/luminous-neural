@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.repositories.base import BaseRepository
 from app.domains.enterprise.model import Enterprise
-from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseUpdateSchema, EnterpriseResponseSchema, EnterpriseResponseUpdateSchema
+from app.domains.enterprise.schema import EnterpriseCreateSchema, EnterpriseUpdateSchema, EnterpriseResponseSchema, EnterpriseResponseSchema
 from app.api.exceptions import NotFoundException
 
 class EnterpriseService:
@@ -60,7 +60,7 @@ class EnterpriseService:
             raise NotFoundException('Enterprise', id)
         return EnterpriseResponseSchema.model_validate(enterprise)
     
-    def update(self, id: int, schema: EnterpriseUpdateSchema) -> EnterpriseResponseUpdateSchema:
+    def update(self, id: int, schema: EnterpriseUpdateSchema) -> EnterpriseResponseSchema:
         """
         Update an existing enterprise by its ID.
 
@@ -80,7 +80,7 @@ class EnterpriseService:
             raise NotFoundException("Enterprise", id)
 
         updated_enterprise = self._repository.update(enterprise, schema)
-        return EnterpriseResponseUpdateSchema.model_validate(updated_enterprise)
+        return EnterpriseResponseSchema.model_validate(updated_enterprise)
     
     def delete(self, id: int) -> None:
         """
