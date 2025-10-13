@@ -1,6 +1,7 @@
 from typing import Any, List, Optional
 
 from app.api.api_schemas import ErrorSchema
+from app.api.exceptions import NotFoundException
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -138,3 +139,29 @@ def register_exception_handlers(exception_handler: FastAPI):
             details=errors,
             status_code=500
         )
+    
+    @exception_handler.exception_handler(NotFoundException)
+    async def not_found_exception_handler(request: Request, exc: NotFoundException):  # type: ignore
+        """Handle cases where a requested resource is not found (HTTP 404).
+
+        This handler catches `NotFoundException` exceptions raised by the application
+        when a requested entity (e.g., user, enterprise, product) does not exist in
+        the database. It returns a standardized JSON response following the
+        ErrorSchema structure.
+
+        Args:
+            request (Request): The FastAPI request object that caused the exception.
+            exc (NotFoundException): The exception instance containing information
+                about the missing resource.
+
+        Returns:
+            JSONResponse: A structured JSON error response with status code 404 and
+                details about the missing resource.
+        """
+        errors = [{"resource": exc.resource, "id": exc.resource_id}] # type: ignore
+        return error_response(
+            message=exc.message,
+            details=errors, # type: ignore
+            status_code=404
+        )
+
