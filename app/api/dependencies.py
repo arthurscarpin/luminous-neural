@@ -7,6 +7,7 @@ from app.domains.enterprise.service import EnterpriseService
 from app.domains.ia_group.service import IAGroupService
 from app.domains.agent.service import AgentService
 from app.domains.tool.service import ToolService
+from app.domains.user.service import UserService
 from app.core.sql_database import db
 
 # --- Database dependency ---
@@ -81,3 +82,17 @@ def get_tool_service(db: Session = Depends(get_db)) -> Generator[ToolService, No
         yield service
     finally:
         logger.debug('ToolService instance released: %s', service)
+
+def get_user_service(db: Session = Depends(get_db)) -> Generator[UserService, None, None]:
+    """
+    Provide an UserService instance using the given DB session.
+
+    Yields:
+        UserService: Service instance.
+    """
+    service = UserService(db)
+    logger.debug('UserService instance created with session: %s', db)
+    try:
+        yield service
+    finally:
+        logger.debug('UserService instance released: %s', service)
