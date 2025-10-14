@@ -95,6 +95,13 @@ def register_exception_handlers(exception_handler: FastAPI):
             JSONResponse: A standardized JSON response with HTTP status 400 and
                         details about the database constraint violation.
         """
+        if 'UNIQUE constraint failed: user.email' in str(exc.orig):
+            return error_response(
+                message='Email is already registered',
+                details=[{'field': 'email'}],
+                status_code=400
+            )
+
         errors = [{"error": str(exc.orig)}]
 
         logger.error(
