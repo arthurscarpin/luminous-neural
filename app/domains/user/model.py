@@ -18,7 +18,7 @@ class User(TimestampMixin, AuditMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(30), nullable=False)
-    email: Mapped[str] = mapped_column(String(30), nullable=False)
+    email: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(128), nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
