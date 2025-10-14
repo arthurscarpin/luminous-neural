@@ -12,12 +12,12 @@ from app.domains.agent.schema import (
 
 from fastapi import APIRouter, Depends, Response, status
 
-ia_group_router = APIRouter(
+agent_router = APIRouter(
     prefix='/agent',
     tags=['Agent']
 )
 
-@ia_group_router.post(
+@agent_router.post(
     '/',
     response_model=ResponseSchema[AgentResponseSchema],
     status_code=status.HTTP_201_CREATED,
@@ -43,7 +43,7 @@ def create_ia_group(
     logger.info('Agent created successfully with ID: %s', agent.id)
     return cast(ResponseSchema[AgentResponseSchema], ResponseSchema(data=agent))
 
-@ia_group_router.get(
+@agent_router.get(
     '/',
     response_model=ResponseSchema[List[AgentResponseSchema]],
     status_code=status.HTTP_200_OK,
@@ -67,7 +67,7 @@ def list_all_ia_groups(
     logger.info('Retrieved %d Agents', len(agents))
     return cast(ResponseSchema[List[AgentResponseSchema]], ResponseSchema(data=agents))
 
-@ia_group_router.get(
+@agent_router.get(
     '/{agent_id}',
     response_model=ResponseSchema[AgentResponseSchema],
     summary='Query Agent by ID',
@@ -92,7 +92,7 @@ def list_by_id(
     logger.info('Agent retrieved successfully: %s', agent.model_dump())
     return cast(ResponseSchema[AgentResponseSchema], ResponseSchema(data=agent))
 
-@ia_group_router.put(
+@agent_router.put(
     '/{agent_id}',
     response_model=ResponseSchema[AgentResponseSchema],
     summary='Update Agent by ID',
@@ -119,7 +119,7 @@ def update_by_id(
     logger.info('Agent updated successfully: %s', updated_agent.model_dump())
     return ResponseSchema(data=AgentResponseSchema.model_validate(updated_agent))
 
-@ia_group_router.delete(
+@agent_router.delete(
     '/{agent_id}',
     summary='Logically delete an Agent by ID',
     response_description='Marks the specified Agent as inactive (logical deletion).'
