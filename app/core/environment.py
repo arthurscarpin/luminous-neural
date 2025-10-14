@@ -21,6 +21,7 @@ class EnvironmentSettings(BaseSettings):
     # --- Database ---
     DB_DIR: str = os.getenv('DB_DIR', '')
     DB_FILE: str = os.getenv('DB_FILE', '')
+    DB_ECHO: str = os.getenv('DB_ECHO', '')
 
     class Config:
         env_file = '.env'

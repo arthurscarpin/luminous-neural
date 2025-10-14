@@ -132,6 +132,6 @@ class SQLDatabaseSettings:
 Path(settings.DB_DIR).mkdir(parents=True, exist_ok=True)
 
 # --- Create singleton and initialize DB ---
-db = SQLDatabaseSettings(f'sqlite:///{settings.DB_DIR}/{settings.DB_FILE}')
+db = SQLDatabaseSettings(f'sqlite:///{settings.DB_DIR}/{settings.DB_FILE}', echo=bool(settings.DB_ECHO))
 db.import_models('app.domains')
 db.create_tables(Base)
