@@ -1,6 +1,7 @@
 annotated-types==0.7.0
 anyio==4.11.0
 asttokens==3.0.0
+bcrypt==4.0.1
 certifi==2025.10.5
 click==8.3.0
 comm==0.2.3
@@ -32,6 +33,7 @@ mdurl==0.1.2
 nest-asyncio==1.6.0
 packaging==25.0
 parso==0.8.5
+passlib==1.7.4
 pexpect==4.9.0
 platformdirs==4.5.0
 prompt_toolkit==3.0.52
