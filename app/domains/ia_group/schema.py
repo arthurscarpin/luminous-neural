@@ -11,9 +11,9 @@ class IAGroupCreateSchema(BaseModel):
 
 class IAGroupUpdateSchema(BaseModel):
     """Schema for updating an IA Groups. All fields optional."""
-    name: Optional[Annotated[str, Field(min_length=3, max_length=30, description='Name of the enterprise')]] = None
-    description: Optional[Annotated[str, Field(min_length=10, max_length=255, description='Description of the enterprise')]] = None
-    updated_by: Annotated[str, Field(min_length=3, max_length=50, description='User or system that updated the enterprise')] = "system"
+    name: Optional[Annotated[str, Field(min_length=3, max_length=30, description='Name of the ia_group')]] = None
+    description: Optional[Annotated[str, Field(min_length=10, max_length=255, description='Description of the ia_group')]] = None
+    updated_by: Annotated[str, Field(min_length=3, max_length=50, description='User or system that updated the ia_group')] = "system"
 
 # --- Output Schema ---
 class IAGroupResponseSchema(BaseModel):
