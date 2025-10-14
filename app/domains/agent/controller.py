@@ -24,7 +24,7 @@ agent_router = APIRouter(
     summary='Create a new Agent',
     response_description='New Agent created.'
 )
-def create_ia_group(
+def create_agent(
     schema: AgentCreateSchema,
     service: AgentService = Depends(get_agent_service)
 ) -> ResponseSchema[AgentResponseSchema]:
@@ -50,7 +50,7 @@ def create_ia_group(
     summary='List all Agents',
     response_description='List of all registered Agents.'
 )
-def list_all_ia_groups(
+def list_all_agents(
     service: AgentService = Depends(get_agent_service)
 ) -> ResponseSchema[List[AgentResponseSchema]]:
     """
@@ -136,7 +136,7 @@ def logical_delete_by_id(
     without exposing it in normal queries.
 
     Args:
-        ia_group_id (int): Unique identifier of the Agent to logically delete.
+        agent_id (int): Unique identifier of the Agent to logically delete.
         service (AgentService, optional): Service instance for Agent operations.
             Defaults to Depends(get_agent_service).
 
