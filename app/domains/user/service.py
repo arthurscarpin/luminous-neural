@@ -9,6 +9,7 @@ from app.domains.user.schema import (
     UserUpdateSchema, 
     UserResponseSchema
 )
+from app.utils.security import hash_password
 
 from app.api.exceptions import NotFoundException
 
@@ -39,6 +40,7 @@ class UserService:
             UserResponseSchema: The created User as a response schema.
         """
         logger.info('Creating a new User with data: %s', schema.model_dump())
+        schema.password = hash_password(schema.password)
         user = self._repository.create(schema)
         validated_users = UserResponseSchema.model_validate(user)
         logger.info('User created successfully: %s', validated_users.model_dump())
@@ -98,6 +100,9 @@ class UserService:
         if not user:
             logger.warning('User with ID %d not found for update', id)
             raise NotFoundException("User", id)
+        
+        if schema.password:
+            schema.password = hash_password(schema.password)
 
         updated_user = self._repository.update(user, schema)
         validated_user = UserResponseSchema.model_validate(updated_user)
