@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.logger import logger
 from app.domains.enterprise.service import EnterpriseService
+from app.domains.ia_group.service import IAGroupService
 from app.core.sql_database import db
 
 # --- Database dependency ---
@@ -22,7 +23,7 @@ def get_db() -> Generator[Session, None, None]:
         session.close()
         logger.debug('Database session closed: %s', session)
 
-# --- Service dependency ---
+# --- Services dependencies ---
 def get_enterprise_service(db: Session = Depends(get_db)) -> Generator[EnterpriseService, None, None]:
     """
     Provide an EnterpriseService instance using the given DB session.
@@ -36,3 +37,17 @@ def get_enterprise_service(db: Session = Depends(get_db)) -> Generator[Enterpris
         yield service
     finally:
         logger.debug('EnterpriseService instance released: %s', service)
+
+def get_ia_group_service(db: Session = Depends(get_db)) -> Generator[IAGroupService, None, None]:
+    """
+    Provide an IAGroupService instance using the given DB session.
+
+    Yields:
+        IAGroupService: Service instance.
+    """
+    service = IAGroupService(db)
+    logger.debug('IAGroupService instance created with session: %s', db)
+    try:
+        yield service
+    finally:
+        logger.debug('IAGroupService instance released: %s', service)
