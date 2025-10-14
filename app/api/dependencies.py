@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.logger import logger
 from app.domains.enterprise.service import EnterpriseService
 from app.domains.ia_group.service import IAGroupService
+from app.domains.agent.service import AgentService
 from app.core.sql_database import db
 
 # --- Database dependency ---
@@ -51,3 +52,17 @@ def get_ia_group_service(db: Session = Depends(get_db)) -> Generator[IAGroupServ
         yield service
     finally:
         logger.debug('IAGroupService instance released: %s', service)
+
+def get_agent_service(db: Session = Depends(get_db)) -> Generator[AgentService, None, None]:
+    """
+    Provide an AgentService instance using the given DB session.
+
+    Yields:
+        AgentService: Service instance.
+    """
+    service = AgentService(db)
+    logger.debug('AgentService instance created with session: %s', db)
+    try:
+        yield service
+    finally:
+        logger.debug('AgentService instance released: %s', service)

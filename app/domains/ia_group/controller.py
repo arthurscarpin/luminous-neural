@@ -32,11 +32,11 @@ def create_ia_group(
     Create a new IA Group using the provided schema.
 
     Args:
-        schema (IAGroupCreateSchema): Data for the new enterprise.
+        schema (IAGroupCreateSchema): Data for the new IA Group.
         service (IAGroupService, optional): Service instance. Defaults to Depends(get_ia_group_service).
 
     Returns:
-        ResponseSchema[IAGroupResponseSchema]: Created enterprise wrapped in a response schema.
+        ResponseSchema[IAGroupResponseSchema]: Created IA Group wrapped in a response schema.
     """
     logger.info('Creating a new IA Group with data: %s', schema.model_dump())
     ia_group = service.create(schema)
@@ -87,9 +87,9 @@ def list_by_id(
     Returns:
         ResponseSchema[IAGroupResponseSchema]: The IA Group data wrapped in a response schema.
     """
-    logger.info('Retrieving enterprise with ID: %d', ia_group_id)
+    logger.info('Retrieving IA Group with ID: %d', ia_group_id)
     ia_group = service.list_by_id(ia_group_id)
-    logger.info('Enterprise retrieved successfully: %s', ia_group.model_dump())
+    logger.info('IA Group retrieved successfully: %s', ia_group.model_dump())
     return cast(ResponseSchema[IAGroupResponseSchema], ResponseSchema(data=ia_group))
 
 @ia_group_router.put(
