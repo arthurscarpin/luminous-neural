@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from pathlib import Path
 from typing import Optional
@@ -64,7 +64,7 @@ class LoggerSettings:
             if settings.LOG_PATH:
                 log_dir = Path(settings.LOG_PATH).parent if settings.LOG_PATH.endswith('.log') else Path(settings.LOG_PATH)
                 log_dir.mkdir(parents=True, exist_ok=True)
-                daily_filename = datetime.utcnow().strftime('%Y%m%d') + '.log'
+                daily_filename = datetime.now(timezone.utc).strftime('%Y%m%d') + '.log'
                 log_path = log_dir / daily_filename
                 file_handler = logging.FileHandler(log_path, encoding='utf-8')
                 file_handler.setFormatter(formatter)

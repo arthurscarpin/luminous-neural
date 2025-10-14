@@ -9,7 +9,6 @@ class EnvironmentSettings(BaseSettings):
 
     Args:
         BaseSettings: Pydantic BaseSettings class that provides environment variable parsing and validation.
-    
     """
     # --- General ---
     ENVIRONMENT: str = cast(Literal['production', 'development', 'approval', 'local'], os.getenv('ENVIRONMENT'))
