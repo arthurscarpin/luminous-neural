@@ -1,28 +1,47 @@
 from datetime import datetime
-from typing import Annotated, Optional
-from pydantic import BaseModel, Field, EmailStr
+from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
-# --- Input Schema ---
+# --- Input Schemas ---
 class UserCreateSchema(BaseModel):
-    """Schema for creating a new User."""
-    name: Annotated[str, Field(min_length=3, max_length=50, description='Full name of the user')]
-    email: Annotated[EmailStr, Field(description='Email address of the user')]
-    password: Annotated[str, Field(min_length=6, max_length=128, description='User password')]
-    is_admin: Optional[bool] = Field(default=False, description='Admin privileges flag')
-    created_by: Optional[str] = Field(default='system', description='User or system that created this user')
+    name: str = Field(..., min_length=3, max_length=50, description="Full name of the user")
+    email: EmailStr = Field(..., description="Email address of the user")
+    password: str = Field(..., min_length=8, max_length=128, description="Password with at least 1 uppercase, 1 lowercase, 1 number")
+    is_admin: Optional[bool] = Field(default=False, description="Admin privileges flag")
+    created_by: Optional[str] = Field(default="system", description="User or system that created this user")
+
+    @field_validator("password")
+    def password_complexity(cls, v: str) -> str:
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one number")
+        return v
 
 class UserUpdateSchema(BaseModel):
-    """Schema for updating an existing User. All fields optional."""
-    name: Optional[Annotated[str, Field(min_length=3, max_length=50, description='Full name of the user')]] = None
-    email: Optional[Annotated[EmailStr, Field(description='Email address of the user')]] = None
-    password: Optional[Annotated[str, Field(min_length=6, max_length=128, description='User password')]] = None
+    name: Optional[str] = Field(None, min_length=3, max_length=50, description="Full name of the user")
+    email: Optional[EmailStr] = Field(None, description="Email address of the user")
+    password: Optional[str] = Field(None, min_length=8, max_length=128, description="Password with at least 1 uppercase, 1 lowercase, 1 number")
     is_admin: Optional[bool] = None
     status: Optional[bool] = None
-    updated_by: Optional[str] = Field(default='system', description='User or system that updated this user')
+    updated_by: Optional[str] = Field(default="system", description="User or system that updated this user")
+
+    @field_validator("password")
+    def password_complexity(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one number")
+        return v
 
 # --- Output Schema ---
 class UserResponseSchema(BaseModel):
-    """Schema representing a User for API responses."""
     id: int
     name: str
     email: str
@@ -33,4 +52,4 @@ class UserResponseSchema(BaseModel):
     updated_at: Optional[datetime] = None
     updated_by: Optional[str] = None
 
-    model_config = {'from_attributes': True}
+    model_config = {"from_attributes": True}
