@@ -1,9 +1,10 @@
 from app.domains.mixins.timestamp import TimestampMixin
 from app.domains.mixins.audit import AuditMixin
 from app.core.sql_database import Base
+from app.domains.associations.enterprise_user_association import enterprise_user_association
 
 from sqlalchemy import String, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 class User(TimestampMixin, AuditMixin, Base):
     """
@@ -22,6 +23,12 @@ class User(TimestampMixin, AuditMixin, Base):
     password: Mapped[str] = mapped_column(String(128), nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    enterprises = relationship(
+        'Enterprise',
+        secondary=enterprise_user_association,
+        back_populates='users'
+    )
         
     def __repr__(self) -> str:
         """
