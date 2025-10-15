@@ -5,7 +5,6 @@ from app.core.logger import logger
 from app.repositories.base import BaseRepository
 from app.repositories.many_to_many import ManyToManyRepository
 from app.domains.enterprise.model import Enterprise
-from app.domains.agent.model import Agent, enterprise_agent_association
 from app.domains.ia_group.model import IAGroup, enterprise_ia_group_association
 from app.domains.enterprise.schema import (
     EnterpriseCreateSchema, 
@@ -30,8 +29,7 @@ class EnterpriseService:
         """
         self._session = session
         self._repository = BaseRepository[Enterprise, EnterpriseCreateSchema](Enterprise, self._session)
-        self._enterprise_agent = ManyToManyRepository(self._session, enterprise_agent_association)
-        self._enterprise_ia_group = ManyToManyRepository(self._session, enterprise_ia_group_association)
+        self._many_to_many = ManyToManyRepository(self._session, enterprise_ia_group_association)
 
     def create(self, schema: EnterpriseCreateSchema) -> EnterpriseResponseSchema:
         """
@@ -177,7 +175,7 @@ class EnterpriseService:
             logger.warning('IAGroup with ID %d not found for linking', ia_group_id)
             raise NotFoundException('IAGroup', ia_group_id)
         
-        self._enterprise_ia_group.link(
+        self._many_to_many.link(
             enterprise_id,
             ia_group_id,
             left_key='enterprise_id',
@@ -194,7 +192,7 @@ class EnterpriseService:
             ia_group_id (int): The ID of the IAGroup to be unlinked.
         """
         logger.info('Unlinking IAGroup %d from Enterprise %d', ia_group_id, enterprise_id)
-        self._enterprise_ia_group.unlink(
+        self._many_to_many.unlink(
             enterprise_id,
             ia_group_id,
             left_key='enterprise_id',
@@ -213,7 +211,7 @@ class EnterpriseService:
             List[int]: A list of IAGroup IDs linked to the specified enterprise.
         """
         logger.info('Listing IAGroups linked to Enterprise %d', enterprise_id)
-        ia_group_ids = self._enterprise_ia_group.get_links(
+        ia_group_ids = self._many_to_many.get_links(
             enterprise_id,
             left_key='enterprise_id',
             right_key='ia_group_id'

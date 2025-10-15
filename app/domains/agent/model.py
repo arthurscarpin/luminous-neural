@@ -2,7 +2,6 @@ from app.domains.mixins.timestamp import TimestampMixin
 from app.domains.mixins.audit import AuditMixin
 from app.core.sql_database import Base
 from app.domains.associations.agent_tool_association import agent_tool_association
-from app.domains.associations.enterprise_agent_association import enterprise_agent_association
 from app.domains.associations.ia_group_agent_association import ia_group_agent_association
 
 from sqlalchemy import String, Boolean
@@ -31,12 +30,6 @@ class Agent(TimestampMixin, AuditMixin, Base):
     tools = relationship(
         'Tool',
         secondary=agent_tool_association,
-        back_populates='agents'
-    )
-
-    enterprises = relationship(
-        'Enterprise',
-        secondary=enterprise_agent_association,
         back_populates='agents'
     )
 

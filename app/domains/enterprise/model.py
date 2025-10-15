@@ -1,7 +1,6 @@
 from app.domains.mixins.timestamp import TimestampMixin
 from app.domains.mixins.audit import AuditMixin
 from app.core.sql_database import Base
-from app.domains.associations.enterprise_agent_association import enterprise_agent_association
 from app.domains.associations.enterprise_ia_group_association import enterprise_ia_group_association
 from app.domains.associations.user_enterprise_association import user_enterprise_association
 
@@ -27,12 +26,6 @@ class Enterprise(TimestampMixin, AuditMixin, Base):
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     ia_model: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-
-    agents = relationship(
-        'Agent',
-        secondary=enterprise_agent_association,
-        back_populates='enterprises'
-    )
 
     ia_groups = relationship(
         'IAGroup',
