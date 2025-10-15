@@ -147,3 +147,81 @@ def logical_delete_by_id(
     service.logical_delete(agent_id)
     logger.info('Agent with ID %d marked as inactive successfully', agent_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# --- Relationship Routes ---
+@agent_router.post(
+    '/{agent_id}/tools/{tool_id}',
+    summary='Link a Tool to an Agent',
+    response_description='Associates a Tool with an Agent.'
+)
+def link_tool_to_agent(
+    agent_id: int,
+    tool_id: int,
+    service: AgentService = Depends(get_agent_service)
+) -> Response:
+    """
+    Link a Tool to an Agent using their IDs.
+
+    Args:
+        agent_id (int): ID of the Agent.
+        tool_id (int): ID of the Tool.
+        service (AgentService, optional): Service handling Agent operations.
+
+    Returns:
+        Response: HTTP 204 No Content response indicating successful linking.
+    """
+    logger.info('Linking Tool %d to Agent %d', tool_id, agent_id)
+    service.link_tool(agent_id, tool_id)
+    logger.info('Tool %d successfully linked to Agent %d', tool_id, agent_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@agent_router.delete(
+    '/{agent_id}/tools/{tool_id}',
+    summary='Unlink a Tool from an Agent',
+    response_description='Removes association of a Tool from an Agent.'
+)
+def unlink_tool_from_agent(
+    agent_id: int,
+    tool_id: int,
+    service: AgentService = Depends(get_agent_service)
+) -> Response:
+    """
+    Remove the link between a Tool and an Agent.
+
+    Args:
+        agent_id (int): ID of the Agent.
+        tool_id (int): ID of the Tool.
+        service (AgentService, optional): Service handling Agent operations.
+
+    Returns:
+        Response: HTTP 204 No Content response indicating successful unlinking.
+    """
+    logger.info('Unlinking Tool %d from Agent %d', tool_id, agent_id)
+    service.unlink_tool(agent_id, tool_id)
+    logger.info('Tool %d successfully unlinked from Agent %d', tool_id, agent_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@agent_router.get(
+    '/{agent_id}/tools',
+    response_model=ResponseSchema[List[int]],
+    summary='List Tools linked to an Agent',
+    response_description='Retrieve all Tool IDs associated with a specific Agent.'
+)
+def list_tools_of_agent(
+    agent_id: int,
+    service: AgentService = Depends(get_agent_service)
+) -> ResponseSchema[List[int]]:
+    """
+    Retrieve all Tool IDs linked to a given Agent.
+
+    Args:
+        agent_id (int): ID of the Agent.
+        service (AgentService, optional): Service handling Agent operations.
+
+    Returns:
+        ResponseSchema[List[int]]: List of Tool IDs linked to the Agent.
+    """
+    logger.info('Retrieving Tools linked to Agent %d', agent_id)
+    tool_ids = service.list_tools(agent_id)
+    logger.info('Agent %d has %d linked Tools', agent_id, len(tool_ids))
+    return ResponseSchema(data=tool_ids)

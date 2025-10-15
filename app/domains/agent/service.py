@@ -3,12 +3,15 @@ from sqlalchemy.orm import Session
 
 from app.core.logger import logger
 from app.repositories.base import BaseRepository
+from app.repositories.many_to_many import ManyToManyRepository
 from app.domains.agent.model import Agent
+from app.domains.tool.model import Tool
 from app.domains.agent.schema import (
     AgentCreateSchema, 
     AgentUpdateSchema, 
     AgentResponseSchema
 )
+from app.domains.agent.model import agent_tool_association
 
 from app.api.exceptions import NotFoundException
 
@@ -27,6 +30,7 @@ class AgentService:
         """
         self._session = session
         self._repository = BaseRepository[Agent, AgentCreateSchema](Agent, self._session)
+        self._many_to_many = ManyToManyRepository(self._session, agent_tool_association)
 
     def create(self, schema: AgentCreateSchema) -> AgentResponseSchema:
         """
@@ -147,3 +151,55 @@ class AgentService:
         
         self._repository.logical_delete(agent)
         logger.info('Logical deletion completed: Agent with ID %d is now inactive', id)
+
+    def link_tool(self, agent_id: int, tool_id: int) -> None:
+        """
+        Link a Tool to an Agent in the many-to-many association table.
+
+        Args:
+            agent_id (int): The Agent ID.
+            tool_id (int): The Tool ID.
+
+        Raises:
+            NotFoundException: If Agent or Tool does not exist.
+        """
+        logger.info('Linking Tool %d to Agent %d', tool_id, agent_id)
+        agent = self._repository.get_by_id(agent_id)
+        if not agent:
+            logger.warning('Agent with ID %d not found for linking', agent_id)
+            raise NotFoundException('Agent', agent_id)
+
+        tool = self._session.get(Tool, tool_id)
+        if not tool:
+            logger.warning('Tool with ID %d not found for linking', tool_id)
+            raise NotFoundException('Tool', tool_id)
+
+        self._many_to_many.link(agent_id, tool_id, left_key='agent_id', right_key='tool_id')
+        logger.info('Tool %d successfully linked to Agent %d', tool_id, agent_id)
+
+    def unlink_tool(self, agent_id: int, tool_id: int) -> None:
+        """
+        Remove the link between a Tool and an Agent.
+
+        Args:
+            agent_id (int): The Agent ID.
+            tool_id (int): The Tool ID.
+        """
+        logger.info('Unlinking Tool %d from Agent %d', tool_id, agent_id)
+        self._many_to_many.unlink(agent_id, tool_id, left_key='agent_id', right_key='tool_id')
+        logger.info('Tool %d successfully unlinked from Agent %d', tool_id, agent_id)
+
+    def list_tools(self, agent_id: int) -> List[int]:
+        """
+        List all Tool IDs linked to a given Agent.
+
+        Args:
+            agent_id (int): The Agent ID.
+
+        Returns:
+            List[int]: IDs of Tools linked to the Agent.
+        """
+        logger.info('Retrieving linked Tools for Agent %d', agent_id)
+        tool_ids = self._many_to_many.get_links(agent_id, left_key='agent_id', right_key='tool_id')
+        logger.info('Agent %d has %d linked Tools', agent_id, len(tool_ids))
+        return tool_ids
