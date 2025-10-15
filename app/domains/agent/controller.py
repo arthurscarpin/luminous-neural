@@ -17,6 +17,7 @@ agent_router = APIRouter(
     tags=['Agent']
 )
 
+# --- CRUD Routes ---
 @agent_router.post(
     '/',
     response_model=ResponseSchema[AgentResponseSchema],

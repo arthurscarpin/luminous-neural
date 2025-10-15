@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 
 from app.core.logger import logger
 from app.repositories.base import BaseRepository
+from app.repositories.many_to_many import ManyToManyRepository
 from app.domains.enterprise.model import Enterprise
+from app.domains.agent.model import Agent, enterprise_agent_association
+from app.domains.ia_group.model import IAGroup, enterprise_ia_group_association
 from app.domains.enterprise.schema import (
     EnterpriseCreateSchema, 
     EnterpriseUpdateSchema, 
@@ -27,6 +30,8 @@ class EnterpriseService:
         """
         self._session = session
         self._repository = BaseRepository[Enterprise, EnterpriseCreateSchema](Enterprise, self._session)
+        self._enterprise_agent = ManyToManyRepository(self._session, enterprise_agent_association)
+        self._enterprise_ia_group = ManyToManyRepository(self._session, enterprise_ia_group_association)
 
     def create(self, schema: EnterpriseCreateSchema) -> EnterpriseResponseSchema:
         """
@@ -147,3 +152,71 @@ class EnterpriseService:
         
         self._repository.logical_delete(enterprise)
         logger.info('Logical deletion completed: Enterprise with ID %d is now inactive', id)
+    
+    def link_ia_group(self, enterprise_id: int, ia_group_id: int) -> None:
+        """
+        Link an IAGroup to an Enterprise.
+
+        Args:
+            enterprise_id (int): The ID of the enterprise to which the IAGroup will be linked.
+            ia_group_id (int): The ID of the IAGroup to be linked.
+
+        Raises:
+            NotFoundException: If the Enterprise with the given ID does not exist.
+            NotFoundException: If the IAGroup with the given ID does not exist.
+        """
+        logger.info('Linking IAGroup %d to Enterprise %d', ia_group_id, enterprise_id)
+        
+        enterprise = self._repository.get_by_id(enterprise_id)
+        if not enterprise:
+            logger.warning('Enterprise with ID %d not found for linking', enterprise_id)
+            raise NotFoundException('Enterprise', enterprise_id)
+        
+        ia_group = self._session.get(IAGroup, ia_group_id)
+        if not ia_group:
+            logger.warning('IAGroup with ID %d not found for linking', ia_group_id)
+            raise NotFoundException('IAGroup', ia_group_id)
+        
+        self._enterprise_ia_group.link(
+            enterprise_id,
+            ia_group_id,
+            left_key='enterprise_id',
+            right_key='ia_group_id'
+        )
+        logger.info('IAGroup %d successfully linked to Enterprise %d', ia_group_id, enterprise_id)
+
+    def unlink_ia_group(self, enterprise_id: int, ia_group_id: int) -> None:
+        """
+        Unlink an IAGroup from an Enterprise.
+
+        Args:
+            enterprise_id (int): The ID of the enterprise from which the IAGroup will be unlinked.
+            ia_group_id (int): The ID of the IAGroup to be unlinked.
+        """
+        logger.info('Unlinking IAGroup %d from Enterprise %d', ia_group_id, enterprise_id)
+        self._enterprise_ia_group.unlink(
+            enterprise_id,
+            ia_group_id,
+            left_key='enterprise_id',
+            right_key='ia_group_id'
+        )
+        logger.info('IAGroup %d successfully unlinked from Enterprise %d', ia_group_id, enterprise_id)
+
+    def list_ia_groups(self, enterprise_id: int) -> List[int]:
+        """
+        List all IAGroup IDs linked to a specific Enterprise.
+
+        Args:
+            enterprise_id (int): The ID of the enterprise whose linked IAGroups will be listed.
+
+        Returns:
+            List[int]: A list of IAGroup IDs linked to the specified enterprise.
+        """
+        logger.info('Listing IAGroups linked to Enterprise %d', enterprise_id)
+        ia_group_ids = self._enterprise_ia_group.get_links(
+            enterprise_id,
+            left_key='enterprise_id',
+            right_key='ia_group_id'
+        )
+        logger.info('Enterprise %d has %d linked IAGroups', enterprise_id, len(ia_group_ids))
+        return ia_group_ids

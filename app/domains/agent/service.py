@@ -5,13 +5,12 @@ from app.core.logger import logger
 from app.repositories.base import BaseRepository
 from app.repositories.many_to_many import ManyToManyRepository
 from app.domains.agent.model import Agent
-from app.domains.tool.model import Tool
+from app.domains.tool.model import Tool, agent_tool_association
 from app.domains.agent.schema import (
     AgentCreateSchema, 
     AgentUpdateSchema, 
     AgentResponseSchema
 )
-from app.domains.agent.model import agent_tool_association
 
 from app.api.exceptions import NotFoundException
 

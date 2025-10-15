@@ -3,7 +3,7 @@ from app.domains.mixins.audit import AuditMixin
 from app.core.sql_database import Base
 from app.domains.associations.enterprise_agent_association import enterprise_agent_association
 from app.domains.associations.enterprise_ia_group_association import enterprise_ia_group_association
-from app.domains.associations.enterprise_user_association import enterprise_user_association
+from app.domains.associations.user_enterprise_association import user_enterprise_association
 
 from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -42,7 +42,7 @@ class Enterprise(TimestampMixin, AuditMixin, Base):
 
     users = relationship(
         'User',
-        secondary=enterprise_user_association,
+        secondary=user_enterprise_association,
         back_populates='enterprises'
     )
     

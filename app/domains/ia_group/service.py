@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.core.logger import logger
 from app.repositories.base import BaseRepository
-from app.domains.ia_group.model import IAGroup
+from app.repositories.many_to_many import ManyToManyRepository
+from app.domains.ia_group.model import IAGroup, ia_group_agent_association
+from app.domains.agent.model import Agent
 from app.domains.ia_group.schema import (
     IAGroupCreateSchema, 
     IAGroupUpdateSchema, 
@@ -27,6 +29,7 @@ class IAGroupService:
         """
         self._session = session
         self._repository = BaseRepository[IAGroup, IAGroupCreateSchema](IAGroup, self._session)
+        self._many_to_many = ManyToManyRepository(self._session, ia_group_agent_association)
 
     def create(self, schema: IAGroupCreateSchema) -> IAGroupResponseSchema:
         """
@@ -147,3 +150,53 @@ class IAGroupService:
         
         self._repository.logical_delete(ia_group)
         logger.info('Logical deletion completed: IA Group with ID %d is now inactive', id)
+
+    def link_agent(self, ia_group_id: int, agent_id: int) -> None:
+        """
+        Link an Agent to an IA Group.
+
+        Args:
+            ia_group_id (int): The IA Group ID.
+            agent_id (int): The Agent ID.
+
+        Raises:
+            NotFoundException: If IA Group or Agent does not exist.
+        """
+        logger.info('Linking Agent %d to IA Group %d', agent_id, ia_group_id)
+        ia_group = self._repository.get_by_id(ia_group_id)
+        if not ia_group:
+            logger.warning('IA Group with ID %d not found for linking', ia_group_id)
+            raise NotFoundException('IA Group', ia_group_id)
+        agent = self._session.get(Agent, agent_id)
+        if not agent:
+            logger.warning('Agent with ID %d not found for linking', agent_id)
+            raise NotFoundException('Agent', agent_id)
+        self._many_to_many.link(ia_group_id, agent_id, left_key='ia_group_id', right_key='agent_id')
+        logger.info('Agent %d successfully linked to IA Group %d', agent_id, ia_group_id)
+
+    def unlink_agent(self, ia_group_id: int, agent_id: int) -> None:
+        """
+        Unlink an Agent from an IA Group.
+
+        Args:
+            ia_group_id (int): The IA Group ID.
+            agent_id (int): The Agent ID.
+        """
+        logger.info('Unlinking Agent %d from IA Group %d', agent_id, ia_group_id)
+        self._many_to_many.unlink(ia_group_id, agent_id, left_key='ia_group_id', right_key='agent_id')
+        logger.info('Agent %d successfully unlinked from IA Group %d', agent_id, ia_group_id)
+
+    def list_agents(self, ia_group_id: int) -> List[int]:
+        """
+        List all Agents linked to a given IA Group.
+
+        Args:
+            ia_group_id (int): The IA Group ID.
+
+        Returns:
+            List[int]: IDs of Agents linked to the IA Group.
+        """
+        logger.info('Retrieving linked Agents for IA Group %d', ia_group_id)
+        agent_ids = self._many_to_many.get_links(ia_group_id, left_key='ia_group_id', right_key='agent_id')
+        logger.info('IA Group %d has %d linked Agents', ia_group_id, len(agent_ids))
+        return agent_ids

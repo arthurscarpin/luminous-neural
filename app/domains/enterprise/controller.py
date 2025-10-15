@@ -172,3 +172,83 @@ def logical_delete_by_id(
 #     service.delete(enterprise_id)
 #     logger.info('Enterprise with ID %d deleted successfully', enterprise_id)
 #     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# --- Relationship Routes ---
+@enterprise_router.post(
+    '/{enterprise_id}/iagroups/{ia_group_id}',
+    summary='Link an IAGroup to an Enterprise',
+    response_description='Successfully linked IAGroup to Enterprise.'
+)
+def link_ia_group_to_enterprise(
+    enterprise_id: int,
+    ia_group_id: int,
+    service: EnterpriseService = Depends(get_enterprise_service)
+) -> Response:
+    """
+    Link an IAGroup to an Enterprise.
+
+    Args:
+        enterprise_id (int): ID of the Enterprise.
+        ia_group_id (int): ID of the IAGroup.
+        service (EnterpriseService, optional): Service instance for Enterprise operations.
+
+    Returns:
+        Response: HTTP 204 No Content indicating successful linking.
+    """
+    logger.info('Linking IAGroup %d to Enterprise %d', ia_group_id, enterprise_id)
+    service.link_ia_group(enterprise_id, ia_group_id)
+    logger.info('IAGroup %d successfully linked to Enterprise %d', ia_group_id, enterprise_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@enterprise_router.delete(
+    '/{enterprise_id}/iagroups/{ia_group_id}',
+    summary='Unlink an IAGroup from an Enterprise',
+    response_description='Successfully unlinked IAGroup from Enterprise.'
+)
+def unlink_ia_group_from_enterprise(
+    enterprise_id: int,
+    ia_group_id: int,
+    service: EnterpriseService = Depends(get_enterprise_service)
+) -> Response:
+    """
+    Remove the link between an IAGroup and an Enterprise.
+
+    Args:
+        enterprise_id (int): ID of the Enterprise.
+        ia_group_id (int): ID of the IAGroup.
+        service (EnterpriseService, optional): Service instance for Enterprise operations.
+
+    Returns:
+        Response: HTTP 204 No Content indicating successful unlinking.
+    """
+    logger.info('Unlinking IAGroup %d from Enterprise %d', ia_group_id, enterprise_id)
+    service.unlink_ia_group(enterprise_id, ia_group_id)
+    logger.info('IAGroup %d successfully unlinked from Enterprise %d', ia_group_id, enterprise_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@enterprise_router.get(
+    '/{enterprise_id}/iagroups',
+    response_model=ResponseSchema[List[int]],
+    summary='List IAGroup IDs linked to an Enterprise',
+    response_description='Retrieve all IAGroup IDs linked to a specific Enterprise.'
+)
+def list_ia_groups_of_enterprise(
+    enterprise_id: int,
+    service: EnterpriseService = Depends(get_enterprise_service)
+) -> ResponseSchema[List[int]]:
+    """
+    Retrieve all IAGroup IDs linked to a given Enterprise.
+
+    Args:
+        enterprise_id (int): ID of the Enterprise.
+        service (EnterpriseService, optional): Service instance for Enterprise operations.
+
+    Returns:
+        ResponseSchema[List[int]]: List of linked IAGroup IDs wrapped in a response schema.
+    """
+    logger.info('Listing IAGroups linked to Enterprise %d', enterprise_id)
+    ia_group_ids = service.list_ia_groups(enterprise_id)
+    logger.info('Enterprise %d has %d linked IAGroups', enterprise_id, len(ia_group_ids))
+    return ResponseSchema(data=ia_group_ids)

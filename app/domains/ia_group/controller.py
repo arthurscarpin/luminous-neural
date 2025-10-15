@@ -17,6 +17,7 @@ ia_group_router = APIRouter(
     tags=['IAGroup']
 )
 
+# --- CRUD Routes ---
 @ia_group_router.post(
     '/',
     response_model=ResponseSchema[IAGroupResponseSchema],
@@ -147,3 +148,83 @@ def logical_delete_by_id(
     service.logical_delete(ia_group_id)
     logger.info('IA Group with ID %d marked as inactive successfully', ia_group_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# --- Relationship Routes ---
+@ia_group_router.post(
+    '/{ia_group_id}/agents/{agent_id}',
+    summary='Link an Agent to an IA Group',
+    response_description='Successfully linked Agent to IA Group.'
+)
+def link_agent_to_ia_group(
+    ia_group_id: int,
+    agent_id: int,
+    service: IAGroupService = Depends(get_ia_group_service)
+) -> Response:
+    """
+    Link an Agent to an IA Group.
+
+    Args:
+        ia_group_id (int): ID of the IA Group.
+        agent_id (int): ID of the Agent.
+        service (IAGroupService, optional): Service instance for IA Group operations.
+
+    Returns:
+        Response: HTTP 204 No Content indicating successful linking.
+    """
+    logger.info('Linking Agent %d to IA Group %d', agent_id, ia_group_id)
+    service.link_agent(ia_group_id, agent_id)
+    logger.info('Agent %d successfully linked to IA Group %d', agent_id, ia_group_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@ia_group_router.delete(
+    '/{ia_group_id}/agents/{agent_id}',
+    summary='Unlink an Agent from an IA Group',
+    response_description='Successfully unlinked Agent from IA Group.'
+)
+def unlink_agent_from_ia_group(
+    ia_group_id: int,
+    agent_id: int,
+    service: IAGroupService = Depends(get_ia_group_service)
+) -> Response:
+    """
+    Remove the link between an Agent and an IA Group.
+
+    Args:
+        ia_group_id (int): ID of the IA Group.
+        agent_id (int): ID of the Agent.
+        service (IAGroupService, optional): Service instance for IA Group operations.
+
+    Returns:
+        Response: HTTP 204 No Content indicating successful unlinking.
+    """
+    logger.info('Unlinking Agent %d from IA Group %d', agent_id, ia_group_id)
+    service.unlink_agent(ia_group_id, agent_id)
+    logger.info('Agent %d successfully unlinked from IA Group %d', agent_id, ia_group_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@ia_group_router.get(
+    '/{ia_group_id}/agents',
+    response_model=ResponseSchema[List[int]],
+    summary='List Agents linked to an IA Group',
+    response_description='Retrieve all Agent IDs linked to a specific IA Group.'
+)
+def list_agents_of_ia_group(
+    ia_group_id: int,
+    service: IAGroupService = Depends(get_ia_group_service)
+) -> ResponseSchema[List[int]]:
+    """
+    Retrieve all Agents linked to a given IA Group.
+
+    Args:
+        ia_group_id (int): ID of the IA Group.
+        service (IAGroupService, optional): Service instance for IA Group operations.
+
+    Returns:
+        ResponseSchema[List[int]]: List of linked Agent IDs wrapped in a response schema.
+    """
+    logger.info('Listing Agents linked to IA Group %d', ia_group_id)
+    agent_ids = service.list_agents(ia_group_id)
+    logger.info('IA Group %d has %d linked Agents', ia_group_id, len(agent_ids))
+    return ResponseSchema(data=agent_ids)

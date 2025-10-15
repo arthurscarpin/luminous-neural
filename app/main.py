@@ -14,11 +14,11 @@ app = FastAPI(
 )
 
 # --- HTTP Routes ---
+app.include_router(user_router)
 app.include_router(enterprise_router)
 app.include_router(ia_group_router)
 app.include_router(agent_router)
 app.include_router(tool_router)
-app.include_router(user_router)
 
 # --- Exception Handlers ---
 register_exception_handlers(app)

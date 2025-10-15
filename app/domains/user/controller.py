@@ -17,6 +17,7 @@ user_router = APIRouter(
     tags=['User']
 )
 
+# --- CRUD Router ---
 @user_router.post(
     '/',
     response_model=ResponseSchema[UserResponseSchema],
@@ -147,3 +148,83 @@ def logical_delete_by_id(
     service.logical_delete(user_id)
     logger.info('User with ID %d marked as inactive successfully', user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# --- Relationship Router ---
+@user_router.post(
+    '/{user_id}/enterprises/{enterprise_id}',
+    summary='Link a User to an Enterprise',
+    response_description='Successfully linked User to Enterprise.'
+)
+def link_user_to_enterprise(
+    user_id: int,
+    enterprise_id: int,
+    service: UserService = Depends(get_user_service)
+) -> Response:
+    """
+    Link a User to an Enterprise.
+
+    Args:
+        user_id (int): ID of the User.
+        enterprise_id (int): ID of the Enterprise.
+        service (UserService, optional): Service instance for User operations.
+
+    Returns:
+        Response: HTTP 204 No Content indicating successful linking.
+    """
+    logger.info('Linking User %d to Enterprise %d', user_id, enterprise_id)
+    service.link_enterprise(user_id, enterprise_id)
+    logger.info('User %d successfully linked to Enterprise %d', user_id, enterprise_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@user_router.delete(
+    '/{user_id}/enterprises/{enterprise_id}',
+    summary='Unlink a User from an Enterprise',
+    response_description='Successfully unlinked User from Enterprise.'
+)
+def unlink_user_from_enterprise(
+    user_id: int,
+    enterprise_id: int,
+    service: UserService = Depends(get_user_service)
+) -> Response:
+    """
+    Remove the link between a User and an Enterprise.
+
+    Args:
+        user_id (int): ID of the User.
+        enterprise_id (int): ID of the Enterprise.
+        service (UserService, optional): Service instance for User operations.
+
+    Returns:
+        Response: HTTP 204 No Content indicating successful unlinking.
+    """
+    logger.info('Unlinking User %d from Enterprise %d', user_id, enterprise_id)
+    service.unlink_enterprise(user_id, enterprise_id)
+    logger.info('User %d successfully unlinked from Enterprise %d', user_id, enterprise_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@user_router.get(
+    '/{user_id}/enterprises',
+    response_model=ResponseSchema[List[int]],
+    summary='List Enterprises linked to a User',
+    response_description='Retrieve all Enterprise IDs linked to a specific User.'
+)
+def list_enterprises_of_user(
+    user_id: int,
+    service: UserService = Depends(get_user_service)
+) -> ResponseSchema[List[int]]:
+    """
+    Retrieve all Enterprises linked to a given User.
+
+    Args:
+        user_id (int): ID of the User.
+        service (UserService, optional): Service instance for User operations.
+
+    Returns:
+        ResponseSchema[List[int]]: List of linked Enterprise IDs wrapped in a response schema.
+    """
+    logger.info('Listing Enterprises linked to User %d', user_id)
+    enterprise_ids = service.list_enterprises(user_id)
+    logger.info('User %d is linked to %d Enterprises', user_id, len(enterprise_ids))
+    return ResponseSchema(data=enterprise_ids)
