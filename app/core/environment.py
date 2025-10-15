@@ -23,6 +23,11 @@ class EnvironmentSettings(BaseSettings):
     DB_FILE: str = os.getenv('DB_FILE', '')
     DB_ECHO: str = os.getenv('DB_ECHO', '')
 
+    # --- JWT Auth ---
+    SECRET_KEY: str = os.getenv('', '')
+    ALGORITHM: str = os.getenv('', '')
+    ACCESS_TOKEN_EXPIRE_MINUTES : int = int(os.getenv('', ''))
+
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
